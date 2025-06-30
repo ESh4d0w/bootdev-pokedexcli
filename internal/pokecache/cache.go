@@ -1,7 +1,6 @@
 package pokecache
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -51,7 +50,6 @@ func (c *Cache) reap(now time.Time, last time.Duration) {
 	defer c.mu.Unlock()
 	for key, entry := range c.cache {
 		if entry.createdAt.Before(now.Add(-last)) {
-			fmt.Printf("\n\n Deleted %s \n\n", key)
 			delete(c.cache, key)
 		}
 	}
