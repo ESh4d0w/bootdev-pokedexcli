@@ -3,6 +3,7 @@ package pokeapi
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -18,28 +19,38 @@ type LocationAreaList struct {
 
 func (c *Client) GetLocationAreaList(providedUrl *string) (LocationAreaList, error) {
 	url := baseURL + "/location-area"
-	// url := baseURL + "/location/?offset=1060&limit=20"
 	if providedUrl != nil && len(*providedUrl) != 0 {
 		url = *providedUrl
 	}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return LocationAreaList{}, fmt.Errorf("Failed creating request: %v", err)
-	}
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return LocationAreaList{}, fmt.Errorf("Network Error: %v", err)
-	}
-	defer res.Body.Close()
 
-	if res.StatusCode < 200 && res.StatusCode > 299 {
-		return LocationAreaList{}, fmt.Errorf("Statuscode Error: %v", err)
+	data, ok := c.cache.Get(url)
+
+	if !ok {
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return LocationAreaList{}, fmt.Errorf("Failed creating request: %v", err)
+		}
+		res, err := c.httpClient.Do(req)
+		if err != nil {
+			return LocationAreaList{}, fmt.Errorf("Network Error: %v", err)
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode < 200 && res.StatusCode > 299 {
+			return LocationAreaList{}, fmt.Errorf("Statuscode Error: %v", err)
+		}
+
+		data, err = io.ReadAll(res.Body)
+		if err != nil {
+			return LocationAreaList{}, fmt.Errorf("Error reading Data: %v", err)
+		}
+		c.cache.Add(url, data)
 	}
-	decoder := json.NewDecoder(res.Body)
+
 	var areaList LocationAreaList
-	err = decoder.Decode(&areaList)
+	err := json.Unmarshal(data, &areaList)
 	if err != nil {
-		return LocationAreaList{}, fmt.Errorf("Json Decdode: %v", err)
+		return LocationAreaList{}, fmt.Errorf("Json Unmarshal: %v", err)
 	}
 	return areaList, nil
 }

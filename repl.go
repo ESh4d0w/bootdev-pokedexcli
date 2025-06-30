@@ -7,10 +7,12 @@ import (
 	"strings"
 
 	"github.com/esh4d0w/bootdev-pokedexcli/internal/pokeapi"
+	"github.com/esh4d0w/bootdev-pokedexcli/internal/pokecache"
 )
 
 type config struct {
 	pokeapiClient pokeapi.Client
+	pokeCache     pokecache.Cache
 	nextMap       *string
 	prevMap       *string
 }
