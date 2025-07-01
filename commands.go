@@ -45,6 +45,11 @@ func getCommands() map[string]cliCommand {
 			description: "Tries to catch a Pokemon",
 			callback:    commandCatchPoke,
 		},
+		"inspect": {
+			name:        "inspect <CaughtPokemonName>",
+			description: "Inspects a caught Pokemon",
+			callback:    commandInspectPoke,
+		},
 	}
 }
 
@@ -143,4 +148,38 @@ func commandCatchPoke(cfg *config, args ...string) error {
 		fmt.Printf("%s escaped!\n", pokemon.Name)
 	}
 	return nil
+}
+
+func commandInspectPoke(cfg *config, args ...string) error {
+	if len(args) != 1 {
+		return errors.New("you must provide a pokemon name")
+	}
+	pokemonaname := args[0]
+	pokemon, ok := cfg.pokeDex[pokemonaname]
+	if !ok {
+		return errors.New("You haven't caught that pokemon")
+	}
+	out := fmt.Sprintf("\n---%s---\n", pokemon.Name)
+	out += fmt.Sprintf(
+		"ID: %4d\nHeight: %3d\tWeight: %3d\n",
+		pokemon.ID,
+		pokemon.Height, pokemon.Weight,
+	)
+	out += "----Stats----\n"
+	for _, stat := range pokemon.Stats {
+		out += fmt.Sprintf(
+			"%-15s Base: %4d\tEfford: %4d\n",
+			stat.Stat.Name, stat.BaseStat, stat.Effort)
+	}
+	out += "-------------\n"
+	out += "----Types----\n"
+	for _, typ := range pokemon.Types {
+		out += fmt.Sprintf("- %-20s\n", typ.Type.Name)
+	}
+	out += "-------------\n"
+
+	fmt.Print(out)
+
+	return nil
+
 }
